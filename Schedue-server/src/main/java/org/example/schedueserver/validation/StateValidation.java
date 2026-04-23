@@ -2,7 +2,7 @@ package org.example.schedueserver.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import org.example.anno.State;
+import org.example.schedueserver.anno.State;
 
 public class StateValidation implements ConstraintValidator<State, String> {
     /**
@@ -11,6 +11,9 @@ public class StateValidation implements ConstraintValidator<State, String> {
      * @param constraintValidatorContext
      * @return  //如果返回false，则校验不通过，反之通过
      */
+
+
+//    ----------------------------------------------------------验证器验证器验证器验证器验证器验证器验证器验证器验证器-----------------------------------------
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
 
@@ -18,7 +21,7 @@ public class StateValidation implements ConstraintValidator<State, String> {
         if(s == null){
             return false;
         }
-        if(s.equals("已发布") || s.equals("草稿")) {
+        if(s.equals("111") || s.equals("222")) {
             return true;
         }
         return false;

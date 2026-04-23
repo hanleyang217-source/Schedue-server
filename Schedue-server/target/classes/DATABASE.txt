@@ -1,0 +1,36 @@
+-- 创建数据库
+CREATE DATABASE IF NOT EXISTS `schedue` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 使用该数据库
+USE `schedue`;
+
+-- 创建用户表
+CREATE TABLE `user` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+  `username` VARCHAR(50) NOT NULL COMMENT '用户名',
+  `password` VARCHAR(100) NOT NULL COMMENT '密码',
+  `nickname` VARCHAR(10) NOT NULL COMMENT '昵称',
+  `role` TINYINT DEFAULT 0 COMMENT '角色：1-管理员，0-普通用户',
+  `weight` DECIMAL(5,2) COMMENT '体重(kg)',
+  `height` DECIMAL(5,2) COMMENT '身高(cm)',
+  `bmi` DECIMAL(4,2) COMMENT 'BMI指数',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  UNIQUE KEY `uk_username` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户表';
+
+-- 创建日程表
+CREATE TABLE `schedue` (
+  `id` INT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
+  `schedue_name` VARCHAR(100) NOT NULL COMMENT '日程名称',
+  `creater_id` INT NOT NULL COMMENT '创建者ID',
+  `role` TINYINT DEFAULT 0 COMMENT '日程类型：0-普通日程，1-运动日程',
+  `address` VARCHAR(200) COMMENT '地址',
+  `teacher_name` VARCHAR(50) COMMENT '教师/负责人姓名',
+  `start_time` DATETIME COMMENT '开始时间',
+  `end_time` DATETIME COMMENT '结束时间',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  KEY `idx_creater_id` (`creater_id`),
+  CONSTRAINT `fk_schedue_user` FOREIGN KEY (`creater_id`) REFERENCES `user` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='日程表';
