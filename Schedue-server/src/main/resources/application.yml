@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/big_event
+    username: root
+    password: jinitaimei123
+
+mybatis:
+#   扫描映射文件所在的路径
+  mapper-locations: classpath:mapper/*.xml
+#   实体类所在包
+  type-aliases-package: org.example.pojo
+  configuration:
+#     开启驼峰命名自动转换
+    map-underscore-to-camel-case: true
+#     打印 SQL 日志
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
