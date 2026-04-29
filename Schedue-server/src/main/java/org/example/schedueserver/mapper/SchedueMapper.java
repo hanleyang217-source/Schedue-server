@@ -14,8 +14,9 @@ public interface SchedueMapper {
             " values (#{schedueName} , #{createrId} , #{role} , #{address} , #{teacherName} , #{createTime} , #{updateTime} , #{startTime} , #{endTime})")
     void add(Schedue schedue);
     //查询每个星期的日程
-    @Select("select * from schedue where creater_id = #{userId} and start_time >= #{weekStartTime} and end_time < #{weekEndTime}")
+    @Select("select * from schedue where creater_id = #{userId} and start_time >= #{weekStartTime} and end_time <= #{weekEndTime}")
     List<Schedue> findPerWeek(LocalDateTime weekStartTime, LocalDateTime weekEndTime, Integer userId);
+
     @Update("update schedue set schedue_name = #{schedueName} , address = #{address} , teacher_name = #{teacherName} , update_time = now() , start_time = #{startTime} , end_time = #{endTime}")
     void update(Schedue schedue);
     //删除指定日程

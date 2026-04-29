@@ -3,10 +3,7 @@ package org.example.schedueserver.controller;
 
 import jakarta.validation.constraints.Pattern;
 import org.example.schedueserver.mapper.UserMapper;
-import org.example.schedueserver.pojo.PageBean;
-import org.example.schedueserver.pojo.Result;
-import org.example.schedueserver.pojo.User;
-import org.example.schedueserver.pojo.UserBmi;
+import org.example.schedueserver.pojo.*;
 import org.example.schedueserver.service.UserService;
 import org.example.schedueserver.utils.JwtUtil;
 import org.example.schedueserver.utils.Md5Util;
@@ -31,39 +28,35 @@ public class UserController {
     @Autowired
     private UserService userService;
 //-------------------------------------------------登陆逻辑登陆逻辑登陆逻辑登陆逻辑----------------------------------------------------------------------------------------------
-    //    注册逻辑
-    @PostMapping("/register")
-    public Result register(@Pattern(regexp = "^\\S{5,16}$") String username, @Pattern(regexp = "^\\S{5,16}$") String password){
-        //参数校验
+//    注册逻辑
+@PostMapping("/register")
+public Result register(@RequestBody @Validated LoginRequest loginRequest){
+    String username = loginRequest.getUsername();
+    String password = loginRequest.getPassword();
 
-        //查询用户
-        User u = userService.findByUserName(username);
-        if(u == null){
-            //没有占用
-            //注册
-            userService.register(username,password);
-            return Result.success();
-        }
-        else{
-            //占用
-            return Result.error("用户名已经被使用了");
-        }
+    User u = userService.findByUserName(username);
+    if(u == null){
+        userService.register(username,password);
+        return Result.success();
     }
+    else{
+        return Result.error("用户名已经被使用了");
+    }
+}
 
 
     //        登陆逻辑
     @PostMapping("/login")
-    @Validated
-    public Result<String> login(@Pattern(regexp = "^\\S{5,16}$") String username, @Pattern(regexp = "^\\S{5,16}$") String password){
-    //        参数校验
+    public Result<String> login(@RequestBody @Validated LoginRequest loginRequest){
+        String username = loginRequest.getUsername();
+        String password = loginRequest.getPassword();
+
         User loginUser = userService.findByUserName(username);
 
-        //查询用户
         if(loginUser == null){
             return Result.error("该用户不存在");
         }
 
-        //判断密码是否正确
         if(Md5Util.getMD5String(password).equals(loginUser.getPassword())){
             Map<String,Object> claims = new HashMap<>();
             claims.put("id",loginUser.getId());
@@ -81,8 +74,8 @@ public class UserController {
     @GetMapping("/userrole")
     public Result userrole(){
         Map<String,Object> map = ThreadLocalUtil.get();
-        String userRole =(String) map.get("role");
-        if(userRole.equals("1")){
+        Integer userRole =(Integer) map.get("role");
+        if(userRole == 1){
             return Result.success("admin");
         }
         else{
@@ -103,12 +96,18 @@ public class UserController {
 
     //更新用户基本信息
     @PutMapping("/update")
-    public Result update(@RequestBody @Validated User user){
+    public Result update(@RequestBody @Validated userUpdateRequest request) {
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setNickname(request.getNickname());
+        user.setWeight(request.getWeight());
+        user.setHeight(request.getHeight());
+
         userService.update(user);
         return Result.success("null");
     }
 
-    //更新用户密码
+        //更新用户密码
     @PatchMapping("/updatePwd")
     public Result updatePwd(@RequestBody Map<String,String> params){
         //校验参数
@@ -139,31 +138,43 @@ public class UserController {
         return Result.success("null");
     }
 
+
     //用户修改身高体重
     @PatchMapping("/updateHW")
-    public Result updateHW (BigDecimal height , BigDecimal weight){
+    public Result updateHW(@RequestBody @Validated UserHeightWeightRequest request) {
+        BigDecimal height = request.getHeight();
+        BigDecimal weight = request.getWeight();
 
         Map<String,Object> map = ThreadLocalUtil.get();
         Integer userId = (Integer)map.get("id");
+
         if(height.compareTo(BigDecimal.ZERO) <= 0 || weight.compareTo(BigDecimal.ZERO) <= 0){
             return Result.error("信息输入不合法，身高体重不得小于等于0");
         }
-        userService.updateHW(height , weight , userId);
+
+        userService.updateHW(height, weight, userId);
         return Result.success();
     }
 //-----------------------------------管理员逻辑管理员逻辑管理员逻辑管理员逻辑管理员逻辑-----------------------------------------------------------------------------------
-    //用户列表查询，仅限于role == 0
-    @GetMapping("/adminSeeUser")
-    public Result<PageBean<User>> List(Integer pageNum , Integer pageSize) {
-
-        PageBean<User> pb = userService.list(pageNum, pageSize);
+//用户列表查询，仅限于role == 0
+    @PostMapping("/adminSeeUser")
+    public Result<PageBean<User>> list(@RequestBody @Validated PageRequest request) {
+        PageBean<User> pb = userService.list(request.getPageNum(), request.getPageSize());
         return Result.success(pb);
     }
-    //用户信息修改，不可删除用户，仅限于role == 0
-    //根据前端传入的用户ID进行查找修改，但是不能修改用户ID，需要前端限制用户的输入
+
     @PutMapping("/adminEditUser")
-    public Result adminEditUser(@RequestBody @Validated User user , Integer id){
-        userService.adminEditUser(user , id);
+    public Result adminEditUser(@RequestBody @Validated AdminUserUpdateRequest request){
+        User user = new User();
+        user.setId(request.getId());
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword());
+        user.setNickname(request.getNickname());
+        user.setWeight(request.getWeight());
+        user.setHeight(request.getHeight());
+        user.setBmi(request.getBmi());
+
+        userService.adminEditUser(user, request.getId());
         return Result.success();
     }
 

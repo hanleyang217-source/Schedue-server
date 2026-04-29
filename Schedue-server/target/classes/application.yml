@@ -5,13 +5,28 @@ spring:
     username: root
     password: jinitaimei123
 
+server:
+  port: 8080
+  address: localhost
+
 mybatis:
-#   扫描映射文件所在的路径
-  mapper-locations: classpath:mapper/*.xml
-#   实体类所在包
+  #   扫描映射文件所在的路径
+  mapper-locations: classpath:*.xml
+  #   实体类所在包
   type-aliases-package: org.example.pojo
   configuration:
-#     开启驼峰命名自动转换
+    #     开启驼峰命名自动转换
     map-underscore-to-camel-case: true
-#     打印 SQL 日志
+    #     打印 SQL 日志
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+
+# DeepSeek API配置
+deepseek:
+  api-key: sk-9fa4e5f5e91644d4933f015a584993c9
+  api-url: https://api.deepseek.com/v1/chat/completions
+  model: deepseek-chat
+
+logging:
+  level:
+    root: DEBUG

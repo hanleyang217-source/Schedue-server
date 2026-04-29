@@ -1,10 +1,7 @@
 package org.example.schedueserver.mapper;
 
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 import org.example.schedueserver.pojo.User;
 
 import java.math.BigDecimal;
@@ -18,14 +15,14 @@ public interface UserMapper {
     @Select("select  * from user where username=#{username}")
     User findByUserName(String username);
     //根据用户ID查询
-    @Select("select  * from user where userid = #{userId}")
+    @Select("select  * from user where id = #{userId}")
     User findByUserId(Integer userId);
 
     //添加
     @Insert("insert into user(username,password,create_time,update_time) values(#{username}, #{password}, now(), now())")
     void add(String username, String password);
     //更新用户基本信息
-    @Update("update user set nickname=#{nickname},email=#{email},update_time=#{updateTime} where id =#{id}")
+    @Update("update user set nickname=#{nickname},update_time=#{updateTime},username=#{username},weight=#{weight},height=#{height} where id =#{id}")
     void update(User user);
     // 更新用户密码
     @Update("update user set password = #{Md5String} , update_time = now() where id =#{id}")
@@ -39,8 +36,8 @@ public interface UserMapper {
     //管理员获取用户列表
     List<User> list();
     //管理员修改用户数据
-    @Update("update user set username = #{username} , password = #{password} , nickname = #{nickname} " +
-            ", weight = #{weight} , height = #{height} , bmi = #{bmi}" +
+    @Update("update user set username = #{user.username} , password = #{user.password} , nickname = #{user.nickname} " +
+            ", weight = #{user.weight} , height = #{user.height} , bmi = #{user.bmi}" +
             ", update_time = now() where id = #{userId}")
-    void adminEditUser(User user, Integer userId);
+    void adminEditUser(@Param("user") User user, @Param("userId") Integer userId);
 }
