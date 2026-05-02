@@ -22,7 +22,7 @@ public interface UserMapper {
     @Insert("insert into user(username,password,create_time,update_time) values(#{username}, #{password}, now(), now())")
     void add(String username, String password);
     //更新用户基本信息
-    @Update("update user set nickname=#{nickname},update_time=#{updateTime},username=#{username},weight=#{weight},height=#{height} where id =#{id}")
+    @Update("update user set nickname=#{nickname},update_time=#{updateTime},username=#{username},weight=#{weight},height=#{height},bmi=#{bmi} where id =#{id}")
     void update(User user);
     // 更新用户密码
     @Update("update user set password = #{Md5String} , update_time = now() where id =#{id}")

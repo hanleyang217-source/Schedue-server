@@ -86,8 +86,13 @@ public class UserServiceImpl  implements UserService {
 
     @Override
     public void adminEditUser(User user, Integer userId) {
-        String md5String = Md5Util.getMD5String(user.getPassword());
-        user.setPassword(md5String);
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            User oldUser = userMapper.findByUserId(userId);
+            if (oldUser != null && !user.getPassword().equals(oldUser.getPassword())) {
+                String md5String = Md5Util.getMD5String(user.getPassword());
+                user.setPassword(md5String);
+            }
+        }
         userMapper.adminEditUser(user , userId);
     }
 }

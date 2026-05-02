@@ -64,7 +64,10 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
             claims.put("username",loginUser.getUsername());
             claims.put("nickname",loginUser.getNickname());
             claims.put("role",loginUser.getRole());
+            claims.put("height", loginUser.getHeight() != null ? loginUser.getHeight().doubleValue() : null);
+            claims.put("weight", loginUser.getWeight() != null ? loginUser.getWeight().doubleValue() : null);
             claims.put("bmi", loginUser.getBmi() != null ? loginUser.getBmi().doubleValue() : null);
+
             String token = JwtUtil.genToken(claims);
             return Result.success(token);
         }
@@ -99,18 +102,47 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
     //更新用户基本信息
     @PutMapping("/update")
     public Result update(@RequestBody @Validated userUpdateRequest request) {
+        Map<String,Object> map = ThreadLocalUtil.get();
+        String username =(String) map.get("username");
+
+        User loginUser = userService.findByUserName(username);
+        if (loginUser == null) {
+            return Result.error("用户不存在");
+        }
+
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setNickname(request.getNickname());
-        user.setWeight(request.getWeight());
-        user.setHeight(request.getHeight());
+        user.setId(loginUser.getId());
+        user.setUsername(request.getUsername() != null ? request.getUsername() : loginUser.getUsername());
+        user.setNickname(request.getNickname() != null ? request.getNickname() : loginUser.getNickname());
+        user.setWeight(request.getWeight() != null ? request.getWeight() : loginUser.getWeight());
+        user.setHeight(request.getHeight() != null ? request.getHeight() : loginUser.getHeight());
+
+        BigDecimal heightCm = user.getHeight();
+        BigDecimal weight = user.getWeight();
+
+        if (heightCm != null && weight != null && heightCm.compareTo(BigDecimal.ZERO) > 0 && weight.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal heightM = heightCm.divide(new BigDecimal(100), 4, BigDecimal.ROUND_HALF_UP);
+            BigDecimal bmi = weight.divide(heightM.multiply(heightM), 2, BigDecimal.ROUND_HALF_UP);
+            user.setBmi(bmi);
+        }
 
         userService.update(user);
-        return Result.success("null");
+
+        Map<String,Object> claims = new HashMap<>();
+        claims.put("id", loginUser.getId());
+        claims.put("username", user.getUsername());
+        claims.put("nickname", user.getNickname());
+        claims.put("role", loginUser.getRole());
+        claims.put("height", user.getHeight() != null ? user.getHeight().doubleValue() : null);
+        claims.put("weight", user.getWeight() != null ? user.getWeight().doubleValue() : null);
+        claims.put("bmi", user.getBmi() != null ? user.getBmi().doubleValue() : null);
+        String token = JwtUtil.genToken(claims);
+
+        return Result.success(token);
     }
 
         //更新用户密码
-    @PatchMapping("/updatePwd")
+    @PutMapping("/updatePwd")
     public Result updatePwd(@RequestBody Map<String,String> params){
         //校验参数
         String oldPwd = params.get("old_pwd");
@@ -141,22 +173,22 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
     }
 
 
-    //用户修改身高体重
-    @PatchMapping("/updateHW")
-    public Result updateHW(@RequestBody @Validated UserHeightWeightRequest request) {
-        BigDecimal height = request.getHeight();
-        BigDecimal weight = request.getWeight();
-
-        Map<String,Object> map = ThreadLocalUtil.get();
-        Integer userId = (Integer)map.get("id");
-
-        if(height.compareTo(BigDecimal.ZERO) <= 0 || weight.compareTo(BigDecimal.ZERO) <= 0){
-            return Result.error("信息输入不合法，身高体重不得小于等于0");
-        }
-
-        userService.updateHW(height, weight, userId);
-        return Result.success();
-    }
+//    //用户修改身高体重
+//    @PatchMapping("/updateHW")
+//    public Result updateHW(@RequestBody @Validated UserHeightWeightRequest request) {
+//        BigDecimal height = request.getHeight();
+//        BigDecimal weight = request.getWeight();
+//
+//        Map<String,Object> map = ThreadLocalUtil.get();
+//        Integer userId = (Integer)map.get("id");
+//
+//        if(height.compareTo(BigDecimal.ZERO) <= 0 || weight.compareTo(BigDecimal.ZERO) <= 0){
+//            return Result.error("信息输入不合法，身高体重不得小于等于0");
+//        }
+//
+//        userService.updateHW(height, weight, userId);
+//        return Result.success();
+//    }
 //-----------------------------------管理员逻辑管理员逻辑管理员逻辑管理员逻辑管理员逻辑-----------------------------------------------------------------------------------
 //用户列表查询，仅限于role == 0
     @PostMapping("/adminSeeUser")
@@ -170,15 +202,20 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
         User user = new User();
         user.setId(request.getId());
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
         user.setNickname(request.getNickname());
         user.setWeight(request.getWeight());
         user.setHeight(request.getHeight());
         user.setBmi(request.getBmi());
 
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(request.getPassword());
+        }
+
         userService.adminEditUser(user, request.getId());
-        return Result.success();
+        return Result.success("用户信息更新成功");
     }
+
+
 
 
 
