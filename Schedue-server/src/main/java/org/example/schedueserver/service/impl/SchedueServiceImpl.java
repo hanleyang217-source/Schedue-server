@@ -96,6 +96,92 @@ public class SchedueServiceImpl implements SchedueService {
     }
 
     @Override
+    public void aiAddSchedue(String description) {
+        Map<String , Object> map = ThreadLocalUtil.get();
+        Integer userId = (Integer) map.get("id");
+
+        // 获取用户未来一周的日程列表，用于AI参考
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime weekStart = now.toLocalDate().atTime(0, 0, 0);
+        LocalDateTime weekEnd = weekStart.plusWeeks(1);
+
+        List<Schedue> weekSchedues = schedueMapper.findScheduesByDateRange(userId, weekStart, weekEnd);
+
+        // 让AI解析日程描述，传入一周的日程信息
+        Schedue schedue = deepSeekService.parseSchedueFromDescription(description, userId, weekSchedues);
+
+        // 根据AI返回的日程日期，查询那一整周的日程进行冲突检测
+        LocalDateTime targetWeekStart = schedue.getStartTime().toLocalDate().atTime(0, 0, 0);
+        LocalDateTime targetWeekEnd = targetWeekStart.plusWeeks(1);
+        List<Schedue> targetWeekSchedues = schedueMapper.findScheduesByDateRange(userId, targetWeekStart, targetWeekEnd);
+
+        // 检查并调整时间，确保不与现有日程冲突且保持15分钟间隔
+        adjustScheduleWithGap(schedue, targetWeekSchedues);
+
+        // 保存日程
+        schedueMapper.add(schedue);
+    }
+
+    /**
+     * 检查并调整日程时间，确保与现有日程保持最小间隔
+     */
+    private void adjustScheduleWithGap(Schedue newSchedue, List<Schedue> existingSchedues) {
+        if (existingSchedues == null || existingSchedues.isEmpty()) {
+            return;
+        }
+
+        final int MIN_GAP_MINUTES = 15;
+
+        // 按开始时间排序现有日程
+        existingSchedues.sort((s1, s2) -> s1.getStartTime().compareTo(s2.getStartTime()));
+
+        // 检查是否与现有日程冲突或间隔不足
+        for (Schedue existing : existingSchedues) {
+            if (hasConflictOrInsufficientGap(newSchedue, existing, MIN_GAP_MINUTES)) {
+                // 尝试调整新日程的时间
+                LocalDateTime adjustedTime = findBestAvailableSlot(newSchedue, existing, MIN_GAP_MINUTES);
+                if (adjustedTime != null) {
+                    long durationMinutes = java.time.Duration.between(newSchedue.getStartTime(), newSchedue.getEndTime()).toMinutes();
+                    newSchedue.setStartTime(adjustedTime);
+                    newSchedue.setEndTime(adjustedTime.plusMinutes(durationMinutes));
+                } else {
+                    throw new RuntimeException("无法安排日程：当天没有足够的时间段（需要保持" + MIN_GAP_MINUTES + "分钟间隔）");
+                }
+            }
+        }
+    }
+
+    /**
+     * 检查两个日程是否有冲突或间隔不足
+     */
+    private boolean hasConflictOrInsufficientGap(Schedue newSchedue, Schedue existing, int minGapMinutes) {
+        // 计算带间隔的时间范围
+        LocalDateTime newStartWithGap = newSchedue.getStartTime().minusMinutes(minGapMinutes);
+        LocalDateTime newEndWithGap = newSchedue.getEndTime().plusMinutes(minGapMinutes);
+
+        // 判断是否重叠
+        return newStartWithGap.isBefore(existing.getEndTime()) &&
+                newEndWithGap.isAfter(existing.getStartTime());
+    }
+
+    /**
+     * 寻找最佳可用时间段
+     */
+    private LocalDateTime findBestAvailableSlot(Schedue newSchedue, Schedue conflictingSchedue, int minGapMinutes) {
+        long durationMinutes = java.time.Duration.between(newSchedue.getStartTime(), newSchedue.getEndTime()).toMinutes();
+
+        // 方案1：安排在冲突日程之前
+        LocalDateTime slotBefore = conflictingSchedue.getStartTime().minusMinutes(minGapMinutes).minusMinutes(durationMinutes);
+        if (slotBefore.isAfter(conflictingSchedue.getStartTime().minusHours(12))) { // 确保不会太早
+            return slotBefore;
+        }
+
+        // 方案2：安排在冲突日程之后（优先选择）
+        LocalDateTime slotAfter = conflictingSchedue.getEndTime().plusMinutes(minGapMinutes);
+        return slotAfter;
+    }
+
+    @Override
     public void addsport(AddSportSchedueRequest request) {
         Map<String , Object> map = ThreadLocalUtil.get();
         Integer id = (Integer) map.get("id");

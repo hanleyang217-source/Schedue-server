@@ -46,6 +46,7 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
 
 
     //        登陆逻辑
+
     @PostMapping("/login")
     public Result<String> login(@RequestBody @Validated LoginRequest loginRequest){
         String username = loginRequest.getUsername();
@@ -61,8 +62,9 @@ public Result register(@RequestBody @Validated LoginRequest loginRequest){
             Map<String,Object> claims = new HashMap<>();
             claims.put("id",loginUser.getId());
             claims.put("username",loginUser.getUsername());
+            claims.put("nickname",loginUser.getNickname());
             claims.put("role",loginUser.getRole());
-            claims.put("bmi",loginUser.getBmi());
+            claims.put("bmi", loginUser.getBmi() != null ? loginUser.getBmi().doubleValue() : null);
             String token = JwtUtil.genToken(claims);
             return Result.success(token);
         }

@@ -31,6 +31,9 @@ public interface SchedueService {
 
     //获取AI日程建议
     String getAISchedueAdvice(Integer userId, LocalDateTime startTime, LocalDateTime endTime);
+
+    //通过AI添加日程
+    void aiAddSchedue(String description);
 }
 
 

@@ -133,5 +133,12 @@ public class SchedueController {
         return Result.success(advice);
     }
 
+    //通过AI添加日程
+    @PostMapping("/ai-add")
+    public Result aiAddSchedue(@RequestBody @Validated org.example.schedueserver.pojo.AiAddSchedueRequest request) {
+        schedueService.aiAddSchedue(request.getDescription());
+        return Result.success();
+    }
+
 
 }
