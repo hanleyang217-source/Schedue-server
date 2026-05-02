@@ -1,0 +1,5 @@
+org\example\schedueserver\interceptors\LoginInterceptor.class
+org\example\schedueserver\SchedueServerApplication.class
+org\example\schedueserver\config\DeepSeekConfig.class
+org\example\schedueserver\anno\State.class
+org\example\schedueserver\config\WebConfig.class
